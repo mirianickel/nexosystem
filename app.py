@@ -178,40 +178,69 @@ def show_landing_page():
 # FEATURES PAGE
 # ========================
 def show_features_page():
-    st.markdown("""
-    <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 1rem;">
-        Como Funciona
-    </h2>
-    <p style="text-align: center; color: #64748B; font-size: 1.1rem; margin-bottom: 3rem;">
-        Sistema completo para desenvolver sua autonomia produtiva
-    </p>
-    """, unsafe_allow_html=True)
+    st.markdown("## 📖 Como Funciona")
+    st.markdown("**Sistema completo para desenvolver sua autonomia produtiva**")
+    st.markdown("---")
     
-    col1, col2, col3 = st.columns(3)
-    
-    features = [
-        ("📊", "Análise de Perfil", "Questionário identifica se você é Executor, Organizador ou Criativo"),
-        ("🎯", "Tarefas Personalizadas", "Vitrine adaptada ao seu perfil com execução guiada"),
-        ("📈", "IAP - Índice de Autonomia", "Acompanhe sua evolução com métricas reais"),
-        ("🤖", "Assistente IA", "Chat integrado para dúvidas e ajustes personalizados"),
-        ("💾", "Histórico Completo", "Visualize evolução e padrões ao longo do tempo"),
-        ("🔒", "Segurança Total", "Proteção de dados conforme LGPD"),
-    ]
-    
-    for i, (icon, title, desc) in enumerate(features):
-        col = [col1, col2, col3][i % 3]
-        with col:
-            st.markdown(f"""
-            <div style="background: #F1F5F9; padding: 2rem; border-radius: 16px; 
-                        text-align: center; margin-bottom: 1.5rem; height: 200px;
-                        transition: all 0.3s;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">{icon}</div>
-                <h3 style="font-size: 1.2rem; margin-bottom: 0.8rem;">{title}</h3>
-                <p style="color: #64748B; font-size: 0.95rem; margin: 0;">{desc}</p>
-            </div>
-            """, unsafe_allow_html=True)
+    # Feature 1
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("<div style='font-size: 4rem; text-align: center;'>📊</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("### Análise de Perfil")
+        st.write("Questionário identifica se você é Executor, Organizador ou Criativo")
     
     st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Feature 2
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("<div style='font-size: 4rem; text-align: center;'>🎯</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("### Tarefas Personalizadas")
+        st.write("Vitrine adaptada ao seu perfil com execução guiada")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Feature 3
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("<div style='font-size: 4rem; text-align: center;'>📈</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("### IAP - Índice de Autonomia")
+        st.write("Acompanhe sua evolução com métricas reais")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Feature 4
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("<div style='font-size: 4rem; text-align: center;'>🤖</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("### Assistente IA")
+        st.write("Chat integrado para dúvidas e ajustes personalizados")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Feature 5
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("<div style='font-size: 4rem; text-align: center;'>💾</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("### Histórico Completo")
+        st.write("Visualize evolução e padrões ao longo do tempo")
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Feature 6
+    col1, col2 = st.columns([1, 3])
+    with col1:
+        st.markdown("<div style='font-size: 4rem; text-align: center;'>🔒</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("### Segurança Total")
+        st.write("Proteção de dados conforme LGPD")
+    
+    st.markdown("---")
     
     col_back, col_start = st.columns([1, 1])
     with col_back:
