@@ -1506,9 +1506,9 @@ def call_groq(history: list, system: str, model: str) -> str:
     """Call Groq API (OpenAI-compatible)."""
     try:
         import requests, os
-        api_key = os.environ.get("GROQ_API_KEY", "")
+        api_key = os.environ.get("GROQ_API", "")
         if not api_key:
-            return "⚠️ Chave da API Groq não configurada. Defina a variável de ambiente `GROQ_API_KEY`."
+            return "⚠️ Chave da API Groq não configurada. Defina a variável de ambiente `GROQ_API`."
         messages = [{"role": "system", "content": system}] + history
         resp = requests.post(
             "https://api.groq.com/openai/v1/chat/completions",
