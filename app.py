@@ -454,21 +454,25 @@ def show_questionnaire():
     q = questions[st.session_state.current_question]
     st.markdown(f"### {q['q']}")
     
-    # Mostrar a opção selecionada
-    selected_opt = st.radio(
-        "Selecione a opção:",
-        q['opts'],
-        key=f"opt_{st.session_state.current_question}"
-    )
+    # Escala de afinidade para cada opção
+    affinity_scale = ["Me afino totalmente", "Me afino parcialmente", 
+                     "Não me afino parcialmente", "Não me afino totalmente"]
     
-    answer = st.radio(
-        "Como você se identifica com esta opção?",
-        ["Me afino totalmente", "Me afino parcialmente", 
-         "Não me afino parcialmente", "Não me afino totalmente"],
-        key=f"affinity_{st.session_state.current_question}"
-    )
+    answers_current = {}
     
-    col1, col2 = st.columns(2)
+    for i, opt in enumerate(q['opts']):
+        st.markdown(f"**{opt}**")
+        answer = st.radio(
+            "Como você se identifica com esta opção?",
+            affinity_scale,
+            key=f"q{st.session_state.current_question}_opt{i}",
+            horizontal=False
+        )
+        answers_current[opt] = answer
+        st.markdown("---")
+    
+    # Botões de navegação
+    col1, col2, col3 = st.columns([1, 1, 1])
     
     with col1:
         if st.session_state.current_question > 0:
@@ -477,12 +481,14 @@ def show_questionnaire():
                 st.rerun()
     
     with col2:
+        # Espaço vazio para centralizar os botões
+        st.write("")
+    
+    with col3:
         if st.button("Próxima →" if st.session_state.current_question < len(questions) - 1 else "Finalizar", 
                      use_container_width=True, type="primary"):
-            st.session_state.answers[st.session_state.current_question] = {
-                "option": selected_opt,
-                "affinity": answer
-            }
+            # Salvar todas as respostas da pergunta atual
+            st.session_state.answers[st.session_state.current_question] = answers_current
             
             if st.session_state.current_question < len(questions) - 1:
                 st.session_state.current_question += 1
