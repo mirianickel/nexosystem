@@ -51,6 +51,8 @@ DEFAULTS = {
     "messages": [],
     "show_floating_menu": False,
     "float_menu_open": False,
+    "ai_provider": "claude",   # "claude" | "groq"
+    "groq_model": "llama-3.3-70b-versatile",
 }
 for k, v in DEFAULTS.items():
     if k not in st.session_state:
@@ -520,8 +522,7 @@ hr {{ border-color: var(--border) !important; margin: 1.5rem 0 !important; }}
 # ─────────────────────────────────────────────
 def tx(key): return t(key, st.session_state.lang)
 
-AFFINITY_WEIGHTS = {tx("aff_1"): 2, tx("aff_2"): 1, tx("aff_3"): 0, tx("aff_4"): -1}
-# also map en keys just in case
+# Static map — never call tx() at module level
 _AW_MAP = {
     "Me identifico totalmente":2,"Me identifico parcialmente":1,
     "Não me identifico muito":0,"Não me identifico":-1,
@@ -1468,6 +1469,77 @@ def step_profile():
 
 
 # ─────────────────────────────────────────────
+# ─────────────────────────────────────────────
+# AI CALL HELPERS
+# ─────────────────────────────────────────────
+def call_claude(history: list, system: str) -> str:
+    """Call Anthropic Claude API directly."""
+    try:
+        import requests, os
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            return "⚠️ Chave da API Anthropic não configurada. Defina a variável de ambiente `ANTHROPIC_API_KEY`."
+        resp = requests.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+            json={
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 512,
+                "system": system,
+                "messages": history,
+            },
+            timeout=30,
+        )
+        data = resp.json()
+        if resp.status_code == 200:
+            return data["content"][0]["text"]
+        return f"⚠️ Erro Claude ({resp.status_code}): {data.get('error', {}).get('message', 'Erro desconhecido')}"
+    except Exception as e:
+        return f"⚠️ Erro ao chamar Claude: {e}"
+
+
+def call_groq(history: list, system: str, model: str) -> str:
+    """Call Groq API (OpenAI-compatible)."""
+    try:
+        import requests, os
+        api_key = os.environ.get("GROQ_API_KEY", "")
+        if not api_key:
+            return "⚠️ Chave da API Groq não configurada. Defina a variável de ambiente `GROQ_API_KEY`."
+        messages = [{"role": "system", "content": system}] + history
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": model,
+                "messages": messages,
+                "max_tokens": 512,
+                "temperature": 0.7,
+            },
+            timeout=30,
+        )
+        data = resp.json()
+        if resp.status_code == 200:
+            return data["choices"][0]["message"]["content"]
+        return f"⚠️ Erro Groq ({resp.status_code}): {data.get('error', {}).get('message', 'Erro desconhecido')}"
+    except Exception as e:
+        return f"⚠️ Erro ao chamar Groq: {e}"
+
+
+GROQ_MODELS = {
+    "llama-3.3-70b-versatile": "Llama 3.3 70B — Versátil (recomendado)",
+    "llama-3.1-8b-instant":    "Llama 3.1 8B — Ultra-rápido",
+    "mixtral-8x7b-32768":      "Mixtral 8x7B — Contexto longo",
+    "gemma2-9b-it":            "Gemma 2 9B — Eficiente",
+}
+
+
 # STEP: CHAT
 # ─────────────────────────────────────────────
 def step_chat():
@@ -1476,32 +1548,80 @@ def step_chat():
 
     st.markdown(f"<div class='section-label animate-in'>{tx('chat_title')}</div>", unsafe_allow_html=True)
     st.markdown(f"<h2 class='hero-headline animate-in' style='font-size:1.8rem;'>🤖 {tx('chat_title')}</h2>", unsafe_allow_html=True)
+
+    # ── Seletor de IA ──────────────────────────
+    st.markdown("#### ⚙️ Escolha o modelo de IA")
+    col_prov, col_model = st.columns([1, 2])
+
+    with col_prov:
+        provider = st.radio(
+            "Provedor",
+            ["claude", "groq"],
+            format_func=lambda x: "🟣 Anthropic Claude" if x == "claude" else "🟠 Groq",
+            index=0 if st.session_state.ai_provider == "claude" else 1,
+            key="radio_provider",
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+        if provider != st.session_state.ai_provider:
+            st.session_state.ai_provider = provider
+            st.rerun()
+
+    with col_model:
+        if st.session_state.ai_provider == "claude":
+            st.markdown(
+                "<div style='padding:0.55rem 1rem; background:#f3f0ff; border-radius:8px; "
+                "font-size:0.9rem; color:#6d28d9;'>🟣 <strong>claude-sonnet-4-20250514</strong></div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            groq_model = st.selectbox(
+                "Modelo Groq",
+                list(GROQ_MODELS.keys()),
+                format_func=lambda k: GROQ_MODELS[k],
+                index=list(GROQ_MODELS.keys()).index(st.session_state.groq_model),
+                key="select_groq_model",
+                label_visibility="collapsed",
+            )
+            if groq_model != st.session_state.groq_model:
+                st.session_state.groq_model = groq_model
+                st.rerun()
+
     st.markdown(f"""
-    <div class="eco-pill animate-in" style="margin-bottom:1.5rem;">
+    <div class="eco-pill animate-in" style="margin-bottom:1.5rem; margin-top:0.5rem;">
         {tx('chat_context')} <strong>{st.session_state.profile}</strong> · IAP {score}%
     </div>
     """, unsafe_allow_html=True)
 
-    # Show messages
+    # ── Mensagens ──────────────────────────────
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
 
-    # Input
+    # ── Input ──────────────────────────────────
     if prompt := st.chat_input(tx("chat_placeholder")):
         st.session_state.messages.append({"role": "user", "content": prompt})
         if DB_AVAILABLE and st.session_state.user_id:
             db.save_chat_message(st.session_state.user_id, "user", prompt)
 
-        system = f"""Você é o assistente de produtividade EcoNexo. 
-O usuário tem perfil {st.session_state.profile} e IAP de {score}%.
-Responda em {st.session_state.lang}. Seja direto, prático e motivador. 
-Máximo 4 parágrafos curtos. Use emojis com moderação."""
+        system = (
+            f"Você é o assistente de produtividade EcoNexo.\n"
+            f"O usuário tem perfil {st.session_state.profile} e IAP de {score}%.\n"
+            f"Responda em {'português' if st.session_state.lang == 'pt' else 'inglês'}. "
+            f"Seja direto, prático e motivador. Máximo 4 parágrafos curtos. Use emojis com moderação."
+        )
 
-        if DB_AVAILABLE:
-            history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
-            reply = db.call_ai(history, system_prompt=system, max_tokens=512)
-        else:
+        history = [{"role": m["role"], "content": m["content"]} for m in st.session_state.messages]
+
+        with st.spinner("Pensando..." if st.session_state.lang == "pt" else "Thinking..."):
+            if st.session_state.ai_provider == "groq":
+                reply = call_groq(history, system, st.session_state.groq_model)
+            elif DB_AVAILABLE:
+                reply = db.call_ai(history, system_prompt=system, max_tokens=512)
+            else:
+                reply = call_claude(history, system)
+
+        if not reply:
             tips = {
                 "Executor": ["Comece pela tarefa mais simples para ganhar momentum.", "Use timer de 25min — foco total, sem distração."],
                 "Organizador": ["Crie um checklist antes de começar qualquer coisa.", "Bloqueie seu calendário para tarefas importantes."],
@@ -1515,7 +1635,7 @@ Máximo 4 parágrafos curtos. Use emojis com moderação."""
             db.save_chat_message(st.session_state.user_id, "assistant", reply)
         st.rerun()
 
-    # Actions
+    # ── Ações ──────────────────────────────────
     st.markdown("---")
     ac1, ac2, ac3 = st.columns(3)
     with ac1:
