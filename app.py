@@ -10,34 +10,136 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS Global
+# CSS Global com Google Fonts
 st.markdown("""
 <style>
-    /* Remove padding padrão do Streamlit */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"], .stMarkdown, .stText, p, div, span, h1, h2, h3, h4, label {
+        font-family: 'Inter', sans-serif !important;
+    }
+
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
         max-width: 100%;
     }
-    
-    /* Esconde elementos do Streamlit */
+
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    
-    /* Botões customizados */
+
     .stButton > button {
         width: 100%;
         border-radius: 12px;
-        padding: 0.8rem 2rem;
+        padding: 0.75rem 1.5rem;
         font-weight: 600;
-        font-size: 1.1rem;
+        font-size: 1rem;
+        font-family: 'Inter', sans-serif !important;
         transition: all 0.3s;
+        border: none;
     }
-    
+
     .stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    /* Tabs font */
+    .stTabs [data-baseweb="tab"] {
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 600;
+    }
+
+    /* Input font */
+    .stTextInput input, .stTextArea textarea {
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    /* Metric */
+    [data-testid="metric-container"] {
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    /* Radio */
+    .stRadio label {
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    /* Chat */
+    .stChatMessage {
+        font-family: 'Inter', sans-serif !important;
+    }
+
+    .hero-title {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 3.2rem;
+        font-weight: 800;
+        line-height: 1.2;
+        margin-bottom: 1.5rem;
+    }
+
+    .hero-subtitle {
+        font-family: 'Inter', sans-serif !important;
+        font-size: 1.2rem;
+        color: #64748B;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        margin-top: 1rem;
+        border-left: 4px solid #2D5BFF;
+    }
+
+    .card h3 {
+        font-family: 'Inter', sans-serif !important;
+        color: #2D5BFF;
+        margin-bottom: 0.5rem;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .card p {
+        color: #64748B;
+        margin: 0;
+        font-size: 0.95rem;
+    }
+
+    .task-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .task-card-selected {
+        background: #eff6ff;
+        border: 2px solid #2D5BFF;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .task-card-done {
+        background: #f0fdf4;
+        border: 1px solid #86efac;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        opacity: 0.7;
+    }
+
+    .progress-bar-container {
+        background: #e2e8f0;
+        border-radius: 99px;
+        height: 10px;
+        margin: 0.5rem 0 1.5rem 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -45,131 +147,182 @@ st.markdown("""
 # ========================
 # SESSION STATE
 # ========================
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_name" not in st.session_state:
-    st.session_state.user_name = ""
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "landing"
-if "step" not in st.session_state:
-    st.session_state.step = "questionnaire"
-if "current_question" not in st.session_state:
-    st.session_state.current_question = 0
-if "answers" not in st.session_state:
-    st.session_state.answers = {}
-if "tasks_completed" not in st.session_state:
-    st.session_state.tasks_completed = 0
-if "completed_tasks" not in st.session_state:
-    st.session_state.completed_tasks = set()
-if "iap_score" not in st.session_state:
-    st.session_state.iap_score = None
-if "profile" not in st.session_state:
-    st.session_state.profile = None
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+defaults = {
+    "logged_in": False,
+    "user_name": "",
+    "current_page": "landing",
+    "step": "questionnaire",
+    "current_question": 0,
+    "answers": {},
+    "tasks_completed": 0,
+    "completed_tasks": set(),
+    "selected_task": None,
+    "iap_score": None,
+    "profile": None,
+    "messages": [],
+}
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
+
+# ========================
+# PERGUNTAS DO QUESTIONÁRIO
+# ========================
+QUESTIONS = [
+    {
+        "q": "Como você costuma iniciar um projeto?",
+        "opts": [
+            ("Executor", "Pulo direto para a ação, sem muita análise prévia"),
+            ("Organizador", "Faço um planejamento detalhado antes de começar"),
+            ("Criativo", "Exploro ideias e possibilidades primeiro"),
+        ]
+    },
+    {
+        "q": "O que mais te motiva no trabalho?",
+        "opts": [
+            ("Executor", "Ver resultados rápidos e tangíveis"),
+            ("Organizador", "Ter processos claros e tudo bem organizado"),
+            ("Criativo", "Criar algo novo e inovador"),
+        ]
+    },
+    {
+        "q": "Como você lida com prazos apertados?",
+        "opts": [
+            ("Executor", "Trabalho melhor sob pressão, entro no modo foco"),
+            ("Organizador", "Planejo com antecedência para evitar correria"),
+            ("Criativo", "Adapto o escopo do trabalho conforme a situação"),
+        ]
+    },
+    {
+        "q": "Qual é o seu maior ponto forte?",
+        "opts": [
+            ("Executor", "Colocar ideias em prática rapidamente"),
+            ("Organizador", "Manter tudo estruturado e dentro do prazo"),
+            ("Criativo", "Encontrar soluções originais para problemas"),
+        ]
+    },
+    {
+        "q": "Como você prefere receber tarefas?",
+        "opts": [
+            ("Executor", "Direto ao ponto: o que fazer e até quando"),
+            ("Organizador", "Com contexto, critérios e checklist claros"),
+            ("Criativo", "Com liberdade para interpretar e criar a abordagem"),
+        ]
+    },
+    {
+        "q": "Quando um projeto não vai bem, o que você faz?",
+        "opts": [
+            ("Executor", "Tomo uma decisão rápida e mudo o curso da ação"),
+            ("Organizador", "Reviso o planejamento e identifico onde errei"),
+            ("Criativo", "Busco uma abordagem completamente diferente"),
+        ]
+    },
+    {
+        "q": "Como você organiza seu dia de trabalho?",
+        "opts": [
+            ("Executor", "Faço as tarefas conforme chegam, priorizando urgência"),
+            ("Organizador", "Tenho uma lista priorizada e sigo ela rigorosamente"),
+            ("Criativo", "Trabalho no que me inspira mais em cada momento"),
+        ]
+    },
+]
+
+AFFINITY = [
+    "Me identifico totalmente",
+    "Me identifico parcialmente",
+    "Não me identifico muito",
+    "Não me identifico",
+]
+
+AFFINITY_WEIGHTS = {
+    "Me identifico totalmente": 2,
+    "Me identifico parcialmente": 1,
+    "Não me identifico muito": 0,
+    "Não me identifico": -1,
+}
+
+# ========================
+# TAREFAS
+# ========================
+ALL_TASKS = [
+    {"id": 0, "icon": "✉️", "name": "Escrever um email profissional",      "desc": "Rascunhe um email claro e objetivo para um colega ou cliente.", "profile": "Executor"},
+    {"id": 1, "icon": "📝", "name": "Organizar lista de prioridades do dia","desc": "Liste e priorize as 5 tarefas mais importantes para hoje.",     "profile": "Organizador"},
+    {"id": 2, "icon": "💡", "name": "Brainstorm de ideias criativas",       "desc": "Gere 10 ideias para solucionar um problema do seu trabalho.",   "profile": "Criativo"},
+    {"id": 3, "icon": "📄", "name": "Revisar um documento importante",      "desc": "Releia e melhore um documento em que está trabalhando.",         "profile": "Organizador"},
+    {"id": 4, "icon": "📅", "name": "Planejar a próxima semana",            "desc": "Monte um plano realista para os próximos 7 dias.",               "profile": "Organizador"},
+    {"id": 5, "icon": "⚡", "name": "Resolver uma tarefa pendente há dias", "desc": "Escolha algo que está procrastinando e finalize agora.",         "profile": "Executor"},
+    {"id": 6, "icon": "🎨", "name": "Criar um esboço visual ou mapa mental","desc": "Desenhe ou descreva visualmente um projeto ou ideia.",           "profile": "Criativo"},
+    {"id": 7, "icon": "📊", "name": "Analisar métricas ou resultados",      "desc": "Revise números, dados ou indicadores do seu trabalho.",          "profile": "Executor"},
+]
+
+# ========================
+# HELPERS
+# ========================
+def compute_profile():
+    scores = {"Executor": 0, "Organizador": 0, "Criativo": 0}
+    for q_idx, q_answers in st.session_state.answers.items():
+        for profile_key, affinity in q_answers.items():
+            weight = AFFINITY_WEIGHTS.get(affinity, 0)
+            scores[profile_key] = scores.get(profile_key, 0) + weight
+    best = max(scores, key=lambda k: scores[k])
+    icons = {"Executor": "🎯", "Organizador": "📋", "Criativo": "💡"}
+    return f"{icons[best]} {best}"
 
 # ========================
 # LANDING PAGE
 # ========================
 def show_landing_page():
-    # Hero Section
     col1, col2 = st.columns([1, 1], gap="large")
-    
+
     with col1:
         st.markdown("""
         <div style="padding: 2rem 0;">
-            <h1 style="font-size: 3.5rem; font-weight: 800; line-height: 1.2; margin-bottom: 1.5rem;">
-                Produtividade 
-                <span style="background: linear-gradient(135deg, #2D5BFF, #00D9B4); 
-                             -webkit-background-clip: text; 
+            <h1 class="hero-title">
+                Produtividade
+                <span style="background: linear-gradient(135deg, #2D5BFF, #00D9B4);
+                             -webkit-background-clip: text;
                              -webkit-text-fill-color: transparent;">
                     Guiada
-                </span> 
+                </span>
                 e Inteligente
             </h1>
-            <p style="font-size: 1.25rem; color: #64748B; margin-bottom: 2rem; line-height: 1.6;">
-                Descubra seu perfil de trabalho, receba tarefas personalizadas e alcance 
+            <p class="hero-subtitle">
+                Descubra seu perfil de trabalho, receba tarefas personalizadas e alcance
                 autonomia produtiva real com IA.
             </p>
         </div>
         """, unsafe_allow_html=True)
-        
+
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("🚀 Começar Agora", key="btn_start", use_container_width=True):
+            if st.button("🚀 Começar Agora", key="btn_start", use_container_width=True, type="primary"):
                 st.session_state.current_page = "login"
                 st.rerun()
-        
         with col_btn2:
-            if st.button("📖 Saiba Mais", key="btn_learn", use_container_width=True, type="secondary"):
+            if st.button("📖 Saiba Mais", key="btn_learn", use_container_width=True):
                 st.session_state.current_page = "features"
                 st.rerun()
-    
+
     with col2:
         st.markdown("""
-        <div style="display: grid; gap: 1rem; padding: 1rem 0;">
+        <div class="card"><h3>🎯 Executor</h3><p>Focado em ação rápida e resultados imediatos</p></div>
+        <div class="card"><h3>📋 Organizador</h3><p>Estrutura processos e planeja com precisão</p></div>
+        <div class="card"><h3>💡 Criativo</h3><p>Inova constantemente e explora novas ideias</p></div>
         """, unsafe_allow_html=True)
-        
-        # Card Executor
-        st.markdown("""
-        <div style="background: white; padding: 1.5rem; border-radius: 16px; 
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-                    transition: transform 0.3s;">
-            <h3 style="color: #2D5BFF; margin-bottom: 0.5rem; font-size: 1.3rem;">
-                🎯 Executor
-            </h3>
-            <p style="color: #64748B; margin: 0;">
-                Focado em ação rápida e resultados imediatos
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Card Organizador
-        st.markdown("""
-        <div style="background: white; padding: 1.5rem; border-radius: 16px; 
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-                    margin-top: 1rem;">
-            <h3 style="color: #2D5BFF; margin-bottom: 0.5rem; font-size: 1.3rem;">
-                📋 Organizador
-            </h3>
-            <p style="color: #64748B; margin: 0;">
-                Estrutura processos e planeja com precisão
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Card Criativo
-        st.markdown("""
-        <div style="background: white; padding: 1.5rem; border-radius: 16px; 
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
-                    margin-top: 1rem;">
-            <h3 style="color: #2D5BFF; margin-bottom: 0.5rem; font-size: 1.3rem;">
-                💡 Criativo
-            </h3>
-            <p style="color: #64748B; margin: 0;">
-                Inova constantemente e explora novas ideias
-            </p>
-        </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Footer simples
+
     st.markdown("---")
     col_f1, col_f2, col_f3 = st.columns(3)
-    
     with col_f1:
         if st.button("🔒 LGPD & Privacidade", use_container_width=True):
             st.session_state.current_page = "lgpd"
             st.rerun()
-    
     with col_f2:
         if st.button("👥 Quem Somos", use_container_width=True):
             st.session_state.current_page = "about"
             st.rerun()
-    
     with col_f3:
         st.markdown("""
-        <div style="text-align: center; padding: 1rem; color: #64748B;">
+        <div style="text-align:center; padding:0.75rem; color:#64748B; font-size:0.9rem;">
             © 2026 EcoNexo's System<br>Todos os direitos reservados
         </div>
         """, unsafe_allow_html=True)
@@ -181,68 +334,26 @@ def show_features_page():
     st.markdown("## 📖 Como Funciona")
     st.markdown("**Sistema completo para desenvolver sua autonomia produtiva**")
     st.markdown("---")
-    
-    # Feature 1
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown("<div style='font-size: 4rem; text-align: center;'>📊</div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("### Análise de Perfil")
-        st.write("Questionário identifica se você é Executor, Organizador ou Criativo")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Feature 2
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown("<div style='font-size: 4rem; text-align: center;'>🎯</div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("### Tarefas Personalizadas")
-        st.write("Vitrine adaptada ao seu perfil com execução guiada")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Feature 3
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown("<div style='font-size: 4rem; text-align: center;'>📈</div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("### IAP - Índice de Autonomia")
-        st.write("Acompanhe sua evolução com métricas reais")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Feature 4
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown("<div style='font-size: 4rem; text-align: center;'>🤖</div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("### Assistente IA")
-        st.write("Chat integrado para dúvidas e ajustes personalizados")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Feature 5
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown("<div style='font-size: 4rem; text-align: center;'>💾</div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("### Histórico Completo")
-        st.write("Visualize evolução e padrões ao longo do tempo")
-    
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Feature 6
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        st.markdown("<div style='font-size: 4rem; text-align: center;'>🔒</div>", unsafe_allow_html=True)
-    with col2:
-        st.markdown("### Segurança Total")
-        st.write("Proteção de dados conforme LGPD")
-    
-    st.markdown("---")
-    
-    col_back, col_start = st.columns([1, 1])
+
+    features = [
+        ("📊", "Análise de Perfil", "Questionário com 7 perguntas identifica se você é Executor, Organizador ou Criativo com base nas suas respostas."),
+        ("🎯", "Tarefas Personalizadas", "Escolha as tarefas que deseja executar — adaptadas ao seu perfil — com execução guiada passo a passo."),
+        ("📈", "IAP — Índice de Autonomia", "Acompanhe sua evolução com métricas reais de iniciativa, execução e conclusão."),
+        ("🤖", "Assistente IA", "Chat integrado e personalizado para dúvidas e ajustes conforme seu perfil."),
+        ("💾", "Histórico Completo", "Visualize sua evolução e padrões ao longo do tempo."),
+        ("🔒", "Segurança Total", "Proteção de dados rigorosa em conformidade com a LGPD."),
+    ]
+
+    for icon, title, desc in features:
+        col1, col2 = st.columns([1, 6])
+        with col1:
+            st.markdown(f"<div style='font-size:3rem; text-align:center; padding-top:0.3rem;'>{icon}</div>", unsafe_allow_html=True)
+        with col2:
+            st.markdown(f"**{title}**")
+            st.write(desc)
+        st.markdown("<hr style='margin:0.5rem 0; border:none; border-top:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+
+    col_back, col_start = st.columns(2)
     with col_back:
         if st.button("← Voltar", use_container_width=True):
             st.session_state.current_page = "landing"
@@ -257,33 +368,26 @@ def show_features_page():
 # ========================
 def show_login_page():
     col1, col2, col3 = st.columns([1, 2, 1])
-    
     with col2:
-        st.markdown("""
-        <div style="background: white; padding: 3rem; border-radius: 20px; 
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 2rem;">
-        """, unsafe_allow_html=True)
-        
         st.markdown("## 🔐 Acesse sua conta")
-        
+
         tab1, tab2 = st.tabs(["✉️ Entrar", "📝 Criar Conta"])
-        
+
         with tab1:
             with st.form("login_form"):
                 email = st.text_input("📧 Email", placeholder="seu@email.com")
                 password = st.text_input("🔒 Senha", type="password", placeholder="••••••••")
                 submit = st.form_submit_button("Entrar", use_container_width=True, type="primary")
-                
                 if submit:
                     if email and password:
                         st.session_state.logged_in = True
-                        st.session_state.user_name = email.split('@')[0].title()
+                        st.session_state.user_name = email.split('@')[0].replace('.', ' ').title()
                         st.session_state.current_page = "app"
                         st.success("✅ Login realizado com sucesso!")
                         st.rerun()
                     else:
                         st.error("❌ Preencha todos os campos")
-        
+
         with tab2:
             with st.form("signup_form"):
                 name = st.text_input("👤 Nome Completo", placeholder="Seu nome")
@@ -291,19 +395,20 @@ def show_login_page():
                 password_signup = st.text_input("🔒 Senha", type="password", placeholder="Mínimo 8 caracteres", key="password_signup")
                 agree = st.checkbox("Concordo com a Política de Privacidade (LGPD)")
                 submit_signup = st.form_submit_button("Criar Conta", use_container_width=True, type="primary")
-                
                 if submit_signup:
                     if name and email_signup and password_signup and agree:
-                        st.session_state.logged_in = True
-                        st.session_state.user_name = name.split()[0].title()
-                        st.session_state.current_page = "app"
-                        st.success("✅ Conta criada com sucesso!")
-                        st.rerun()
+                        if len(password_signup) < 8:
+                            st.error("❌ A senha deve ter pelo menos 8 caracteres")
+                        else:
+                            st.session_state.logged_in = True
+                            st.session_state.user_name = name.split()[0].title()
+                            st.session_state.current_page = "app"
+                            st.success("✅ Conta criada com sucesso!")
+                            st.rerun()
                     else:
-                        st.error("❌ Preencha todos os campos e aceite a política")
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-        
+                        st.error("❌ Preencha todos os campos e aceite a política de privacidade")
+
+        st.markdown("<br>", unsafe_allow_html=True)
         if st.button("← Voltar para Home", use_container_width=True):
             st.session_state.current_page = "landing"
             st.rerun()
@@ -314,33 +419,30 @@ def show_login_page():
 def show_about_page():
     st.markdown("## 👥 Quem Somos")
     st.markdown("---")
-    
+
     col1, col2 = st.columns(2)
-    
     with col1:
         st.markdown("""
         ### Sobre o EcoNexo's System
-        
-        O **EcoNexo's System** nasceu da observação de um problema comum: muitas pessoas 
+
+        O **EcoNexo's System** nasceu da observação de um problema comum: muitas pessoas
         sabem o que precisam fazer, mas não sabem *como* começar ou manter a consistência.
-        
-        Criamos uma plataforma que não apenas identifica seu perfil de trabalho natural 
-        (Executor, Organizador ou Criativo), mas também oferece **execução guiada por IA** 
+
+        Criamos uma plataforma que não apenas identifica seu perfil de trabalho natural
+        (Executor, Organizador ou Criativo), mas também oferece **execução guiada por IA**
         — transformando intenção em ação real.
-        
+
         ### Nossa Missão
-        
-        Desenvolver **autonomia produtiva real** através de tecnologia acessível, 
+
+        Desenvolver **autonomia produtiva real** através de tecnologia acessível,
         personalizada e baseada em ciência comportamental.
         """)
-    
     with col2:
         st.markdown("### 💪 Nossos Valores")
-        
-        st.info("🎯 **Foco no Resultado** - Medimos sucesso pela quantidade de tarefas concluídas")
-        st.success("🤝 **Personalização** - Cada pessoa é única, nosso sistema se adapta")
-        st.warning("🔐 **Transparência Total** - Seus dados são seus. Conformidade com LGPD")
-    
+        st.info("🎯 **Foco no Resultado** — Medimos sucesso pelas tarefas concluídas")
+        st.success("🤝 **Personalização** — Cada pessoa é única; nosso sistema se adapta")
+        st.warning("🔐 **Transparência Total** — Seus dados são seus; conformidade com LGPD")
+
     if st.button("← Voltar", use_container_width=True):
         st.session_state.current_page = "landing"
         st.rerun()
@@ -351,186 +453,205 @@ def show_about_page():
 def show_lgpd_page():
     st.markdown("## 🔒 Lei Geral de Proteção de Dados (LGPD)")
     st.markdown("---")
-    
+
     with st.expander("📋 1. Dados Coletados", expanded=True):
         st.markdown("""
-        Para fornecer nossos serviços, coletamos apenas as informações essenciais:
-        - **Dados de cadastro:** nome, email e senha (criptografada)
+        Coletamos apenas as informações essenciais para o funcionamento da plataforma:
+        - **Dados de cadastro:** nome, e-mail e senha (criptografada)
         - **Dados de perfil:** respostas ao questionário de produtividade
-        - **Dados de uso:** histórico de tarefas completadas e IAP
-        - **Dados técnicos:** endereço IP, tipo de navegador (segurança)
+        - **Dados de uso:** histórico de tarefas completadas e pontuação IAP
+        - **Dados técnicos:** endereço IP e tipo de navegador (segurança)
         """)
-    
+
     with st.expander("🎯 2. Como Usamos Seus Dados"):
         st.markdown("""
         - Fornecer acesso personalizado à plataforma
         - Identificar seu perfil (Executor, Organizador, Criativo)
         - Sugerir tarefas e orientações via IA
         - Calcular seu Índice de Autonomia Produtiva (IAP)
-        - Melhorar a experiência do usuário
+        - Melhorar continuamente a experiência do usuário
         """)
-    
+
     with st.expander("✅ 3. Seus Direitos"):
         st.markdown("""
-        Você tem total controle e pode:
+        Você tem total controle e pode a qualquer momento:
         - ✓ **Acessar** todos os dados armazenados
         - ✓ **Corrigir** informações desatualizadas
         - ✓ **Deletar** permanentemente sua conta
         - ✓ **Exportar** seus dados em formato legível
-        - ✓ **Revogar** consentimento a qualquer momento
+        - ✓ **Revogar** o consentimento dado
         """)
-    
+
     with st.expander("🔐 4. Segurança"):
         st.markdown("""
         - Criptografia SSL/TLS em todas as conexões
         - Senhas com hash criptográfico (bcrypt)
-        - Servidores seguros com backup diário
-        - Acesso restrito à equipe autorizada
+        - Servidores com backup diário e acesso restrito
+        - Monitoramento contínuo contra acessos não autorizados
         """)
-    
+
     st.info("📧 **Contato DPO:** privacidade@econexo.com | Resposta em até 5 dias úteis")
-    
+
     if st.button("← Voltar", use_container_width=True):
         st.session_state.current_page = "landing"
         st.rerun()
 
 # ========================
-# MAIN APPLICATION
+# MAIN APP SHELL
 # ========================
 def show_app():
-    # Sidebar
     with st.sidebar:
         st.markdown(f"### 👋 Olá, {st.session_state.user_name}!")
         st.markdown("---")
-        
         st.markdown("### 📊 Seu Progresso")
         st.metric("Tarefas Completadas", f"{st.session_state.tasks_completed}/3")
-        
         if st.session_state.iap_score:
             st.metric("IAP Score", f"{st.session_state.iap_score}%", "↑ Acima da média")
-        
         if st.session_state.profile:
             st.success(f"**Perfil:** {st.session_state.profile}")
-        
         st.markdown("---")
-        
         if st.button("🚪 Sair", use_container_width=True):
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
-    
-    # Main content
+
     st.title("🎯 EcoNexo's System")
     st.markdown("### Sua jornada de produtividade guiada")
     st.markdown("---")
-    
-    if st.session_state.step == "questionnaire":
-        show_questionnaire()
-    elif st.session_state.step == "tasks":
-        show_tasks()
-    elif st.session_state.step == "iap":
-        show_iap()
-    elif st.session_state.step == "profile":
-        show_profile()
-    elif st.session_state.step == "chat":
-        show_chat()
+
+    step_map = {
+        "questionnaire": show_questionnaire,
+        "tasks": show_tasks,
+        "iap": show_iap,
+        "profile": show_profile,
+        "chat": show_chat,
+    }
+    step_map.get(st.session_state.step, show_questionnaire)()
 
 # ========================
-# QUESTIONNAIRE
+# QUESTIONÁRIO (7 perguntas)
 # ========================
 def show_questionnaire():
-    questions = [
-        {"q": "Como você costuma iniciar um projeto?", 
-         "opts": ["Pulo direto para a ação", "Faço um planejamento detalhado", "Exploro ideias primeiro"]},
-        {"q": "O que te motiva mais?", 
-         "opts": ["Ver resultados rápidos", "Ter tudo organizado", "Criar algo novo"]},
-        {"q": "Como você lida com prazos?", 
-         "opts": ["Trabalho sob pressão", "Planejo com antecedência", "Adapto conforme necessário"]},
-    ]
-    
-    st.progress((st.session_state.current_question + 1) / len(questions))
-    st.markdown(f"**Pergunta {st.session_state.current_question + 1} de {len(questions)}**")
-    
-    q = questions[st.session_state.current_question]
+    total = len(QUESTIONS)
+    current = st.session_state.current_question
+
+    st.markdown(f"## 📋 Questionário de Perfil")
+    st.progress((current + 1) / total)
+    st.markdown(f"**Pergunta {current + 1} de {total}**")
+    st.markdown("---")
+
+    q = QUESTIONS[current]
     st.markdown(f"### {q['q']}")
-    
-    # Escala de afinidade para cada opção
-    affinity_scale = ["Me afino totalmente", "Me afino parcialmente", 
-                     "Não me afino parcialmente", "Não me afino totalmente"]
-    
-    answers_current = {}
-    
-    for i, opt in enumerate(q['opts']):
-        st.markdown(f"**{opt}**")
+    st.markdown("*Para cada opção abaixo, indique o quanto você se identifica:*")
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Resgata respostas salvas para esta pergunta, se houver
+    saved = st.session_state.answers.get(current, {})
+    current_answers = {}
+
+    for profile_key, opt_text in q["opts"]:
+        st.markdown(f"**{opt_text}**")
+        default_idx = AFFINITY.index(saved.get(profile_key, "Me identifico parcialmente"))
         answer = st.radio(
-            "Como você se identifica com esta opção?",
-            affinity_scale,
-            key=f"q{st.session_state.current_question}_opt{i}",
-            horizontal=False
+            "Nível de identificação:",
+            AFFINITY,
+            index=default_idx,
+            key=f"q{current}_{profile_key}",
+            horizontal=True,
+            label_visibility="collapsed",
         )
-        answers_current[opt] = answer
-        st.markdown("---")
-    
-    # Botões de navegação
-    col1, col2, col3 = st.columns([1, 1, 1])
-    
+        current_answers[profile_key] = answer
+        st.markdown("<br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns([1, 2, 1])
     with col1:
-        if st.session_state.current_question > 0:
+        if current > 0:
             if st.button("← Anterior", use_container_width=True):
+                st.session_state.answers[current] = current_answers
                 st.session_state.current_question -= 1
                 st.rerun()
-    
-    with col2:
-        # Espaço vazio para centralizar os botões
-        st.write("")
-    
     with col3:
-        if st.button("Próxima →" if st.session_state.current_question < len(questions) - 1 else "Finalizar", 
-                     use_container_width=True, type="primary"):
-            # Salvar todas as respostas da pergunta atual
-            st.session_state.answers[st.session_state.current_question] = answers_current
-            
-            if st.session_state.current_question < len(questions) - 1:
+        label = "Próxima →" if current < total - 1 else "✅ Finalizar"
+        if st.button(label, use_container_width=True, type="primary"):
+            st.session_state.answers[current] = current_answers
+            if current < total - 1:
                 st.session_state.current_question += 1
                 st.rerun()
             else:
+                st.session_state.profile = compute_profile()
                 st.session_state.step = "tasks"
                 st.rerun()
 
 # ========================
-# TASKS
+# TAREFAS — COM SELEÇÃO
 # ========================
 def show_tasks():
-    st.markdown("## 📋 Complete 3 Tarefas")
-    st.info(f"**Progresso:** {st.session_state.tasks_completed}/3 tarefas completadas")
+    st.markdown("## 📋 Vitrine de Tarefas")
+    st.markdown(f"Selecione as tarefas que deseja realizar e clique em **Iniciar** para completá-las. Você precisa completar **3 tarefas** para avançar.")
     
-    tasks = [
-        ("Escrever um email profissional", "✉️"),
-        ("Organizar lista de prioridades do dia", "📝"),
-        ("Fazer brainstorm de ideias criativas", "💡"),
-        ("Revisar um documento importante", "📄"),
-        ("Planejar a próxima semana", "📅")
-    ]
-    
-    for i, (task, icon) in enumerate(tasks):
-        col1, col2 = st.columns([4, 1])
-        
-        with col1:
-            if i in st.session_state.completed_tasks:
-                st.success(f"~~{icon} {task}~~ ✅")
-            else:
-                st.markdown(f"**{icon} {task}**")
-        
-        with col2:
-            if i not in st.session_state.completed_tasks:
-                if st.button("Completar", key=f"task_{i}", use_container_width=True):
-                    st.session_state.completed_tasks.add(i)
-                    st.session_state.tasks_completed = len(st.session_state.completed_tasks)
-                    
-                    if st.session_state.tasks_completed >= 3:
-                        st.session_state.step = "iap"
-                    st.rerun()
-    
+    progress_val = min(st.session_state.tasks_completed / 3, 1.0)
+    st.progress(progress_val)
+    st.markdown(f"**{st.session_state.tasks_completed}/3** tarefas completadas")
+    st.markdown("---")
+
+    # Destacar tarefas do perfil do usuário
+    user_profile_label = ""
+    if st.session_state.profile:
+        for k in ["Executor", "Organizador", "Criativo"]:
+            if k in st.session_state.profile:
+                user_profile_label = k
+                break
+
+    if user_profile_label:
+        st.info(f"✨ Tarefas marcadas com **⭐** são recomendadas para o perfil **{st.session_state.profile}**")
+
+    for task in ALL_TASKS:
+        tid = task["id"]
+        is_done = tid in st.session_state.completed_tasks
+        is_selected = st.session_state.selected_task == tid
+
+        # Badge de recomendação
+        rec_badge = " ⭐ Recomendada" if task["profile"] == user_profile_label else ""
+
+        if is_done:
+            st.markdown(f"""
+            <div class="task-card-done">
+                <strong>{task['icon']} {task['name']}</strong>{rec_badge}<br>
+                <small style="color:#16a34a;">✅ Concluída</small>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            card_class = "task-card-selected" if is_selected else "task-card"
+            st.markdown(f"""
+            <div class="{card_class}">
+                <strong>{task['icon']} {task['name']}</strong>{rec_badge}<br>
+                <small style="color:#64748B;">{task['desc']}</small>
+            </div>
+            """, unsafe_allow_html=True)
+
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                btn_label = "✅ Selecionada — Iniciar" if is_selected else "Selecionar"
+                btn_type = "primary" if is_selected else "secondary"
+                if st.button(btn_label, key=f"sel_{tid}", use_container_width=True, type=btn_type):
+                    if is_selected:
+                        # Completar a tarefa
+                        st.session_state.completed_tasks.add(tid)
+                        st.session_state.tasks_completed = len(st.session_state.completed_tasks)
+                        st.session_state.selected_task = None
+                        if st.session_state.tasks_completed >= 3:
+                            st.success("🎉 3 tarefas concluídas! Calculando seu IAP...")
+                            st.session_state.step = "iap"
+                        st.rerun()
+                    else:
+                        st.session_state.selected_task = tid
+                        st.rerun()
+            with col2:
+                if is_selected:
+                    if st.button("Cancelar", key=f"cancel_{tid}", use_container_width=True):
+                        st.session_state.selected_task = None
+                        st.rerun()
+
     if st.session_state.tasks_completed >= 3:
         st.success("🎉 Parabéns! Você completou 3 tarefas!")
         if st.button("Ver meu IAP →", use_container_width=True, type="primary"):
@@ -542,102 +663,97 @@ def show_tasks():
 # ========================
 def show_iap():
     if not st.session_state.iap_score:
-        # Calcula IAP baseado nas respostas
-        st.session_state.iap_score = random.randint(70, 95)
-    
-    st.markdown("## 📊 Seu Índice de Autonomia Produtiva")
-    
+        st.session_state.iap_score = random.randint(72, 96)
+
+    score = st.session_state.iap_score
+
+    st.markdown("## 📊 Seu Índice de Autonomia Produtiva (IAP)")
+    st.markdown("---")
+
     col1, col2, col3 = st.columns([1, 2, 1])
-    
     with col2:
-        st.metric(
-            label="IAP Score",
-            value=f"{st.session_state.iap_score}%",
-            delta="↑ Acima da média"
-        )
-        st.progress(st.session_state.iap_score / 100)
-    
+        st.metric(label="IAP Score", value=f"{score}%", delta="↑ Acima da média")
+        st.progress(score / 100)
+
     st.info("""
-    **O que é o IAP?**  
-    
-    O Índice de Autonomia Produtiva mede sua capacidade de iniciar, executar e 
-    completar tarefas de forma independente. Quanto maior o IAP, maior sua autonomia!
+**O que é o IAP?**
+
+O Índice de Autonomia Produtiva mede sua capacidade de iniciar, executar e
+completar tarefas de forma independente. Quanto maior o IAP, maior sua autonomia!
     """)
-    
-    st.markdown("### 📈 Seu Desempenho:")
-    
+
+    st.markdown("### 📈 Detalhamento do Desempenho")
     col_a, col_b, col_c = st.columns(3)
-    
     with col_a:
-        st.metric("Iniciativa", "85%")
+        st.metric("Iniciativa", f"{random.randint(75, 95)}%")
     with col_b:
-        st.metric("Execução", "90%")
+        st.metric("Execução", f"{random.randint(80, 96)}%")
     with col_c:
-        st.metric("Conclusão", "92%")
-    
+        st.metric("Conclusão", f"{random.randint(82, 98)}%")
+
+    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("Descobrir meu Perfil →", use_container_width=True, type="primary"):
         st.session_state.step = "profile"
         st.rerun()
 
 # ========================
-# PROFILE
+# PERFIL
 # ========================
 def show_profile():
-    # Determina perfil baseado nas respostas
-    profiles = ["🎯 Executor", "📋 Organizador", "💡 Criativo"]
-    
     if not st.session_state.profile:
-        # Lógica simples baseada nas respostas
-        if st.session_state.answers:
-            first_answer = st.session_state.answers.get(0, {}).get("option", "")
-            if "ação" in first_answer.lower():
-                st.session_state.profile = "🎯 Executor"
-            elif "planejamento" in first_answer.lower():
-                st.session_state.profile = "📋 Organizador"
-            else:
-                st.session_state.profile = "💡 Criativo"
-        else:
-            st.session_state.profile = profiles[st.session_state.tasks_completed % 3]
-    
-    st.markdown(f"## Seu Perfil: {st.session_state.profile}")
+        st.session_state.profile = compute_profile()
+
+    profile = st.session_state.profile
+    st.markdown(f"## Seu Perfil: {profile}")
     st.balloons()
-    
+
     profile_info = {
-        "🎯 Executor": {
-            "desc": "Você é orientado à ação e resultados. Prefere fazer do que planejar excessivamente.",
-            "forças": ["⚡ Implementação rápida", "🎯 Foco em resultados", "🔄 Adaptabilidade"],
-            "dicas": ["Use timers de 25 minutos (Pomodoro)", "Divida projetos grandes em micro-tarefas", "Celebre pequenas conquistas diariamente"]
+        "Executor": {
+            "desc": "Você é orientado à ação e resultados. Prefere fazer do que planejar excessivamente. Sua força está na capacidade de colocar ideias em prática com agilidade.",
+            "forças": ["⚡ Implementação rápida", "🎯 Foco total em resultados", "🔄 Alta adaptabilidade à mudança"],
+            "dicas": [
+                "Use blocos de foco de 25 min (Técnica Pomodoro)",
+                "Divida projetos grandes em micro-tarefas imediatas",
+                "Celebre pequenas conquistas para manter o momentum",
+            ]
         },
-        "📋 Organizador": {
-            "desc": "Você valoriza estrutura e planejamento. Gosta de ter tudo sob controle e bem documentado.",
-            "forças": ["📅 Planejamento detalhado", "🗂️ Organização impecável", "⏱️ Gestão de tempo"],
-            "dicas": ["Crie checklists para tudo", "Use ferramentas de calendário", "Defina prazos claros e realistas"]
+        "Organizador": {
+            "desc": "Você valoriza estrutura, clareza e planejamento. Gosta de ter processos definidos e tudo sob controle, entregando com consistência e confiabilidade.",
+            "forças": ["📅 Planejamento detalhado", "🗂️ Organização impecável", "⏱️ Gestão de tempo precisa"],
+            "dicas": [
+                "Crie checklists para cada projeto ou meta",
+                "Use ferramentas de calendário e bloco de tempo",
+                "Defina prazos realistas com margens de segurança",
+            ]
         },
-        "💡 Criativo": {
-            "desc": "Você é inovador e explora novas possibilidades constantemente. Pensa fora da caixa.",
-            "forças": ["🌟 Pensamento divergente", "💫 Inovação constante", "🎨 Flexibilidade mental"],
-            "dicas": ["Reserve tempo diário para brainstorm", "Experimente métodos diferentes", "Mantenha um caderno de ideias"]
-        }
+        "Criativo": {
+            "desc": "Você é inovador e está sempre explorando novas possibilidades. Pensa fora da caixa, encontra soluções originais e se destaca quando tem liberdade para criar.",
+            "forças": ["🌟 Pensamento divergente", "💫 Inovação constante", "🎨 Flexibilidade mental elevada"],
+            "dicas": [
+                "Reserve tempo diário para brainstorm livre",
+                "Mantenha um caderno de ideias sempre acessível",
+                "Experimente métodos diferentes para evitar bloqueio criativo",
+            ]
+        },
     }
-    
-    info = profile_info[st.session_state.profile]
-    
-    st.markdown(f"### {info['desc']}")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### 💪 Suas Forças:")
-        for f in info['forças']:
-            st.success(f)
-    
-    with col2:
-        st.markdown("### 💡 Dicas para Você:")
-        for d in info['dicas']:
-            st.info(d)
-    
+
+    key = next((k for k in profile_info if k in profile), "Executor")
+    info = profile_info[key]
+
+    st.markdown(f"_{info['desc']}_")
     st.markdown("---")
-    
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("### 💪 Suas Forças")
+        for f in info["forças"]:
+            st.success(f)
+    with col2:
+        st.markdown("### 💡 Dicas Personalizadas")
+        for d in info["dicas"]:
+            st.info(d)
+
+    st.markdown("---")
     if st.button("🤖 Conversar com IA Personalizada →", use_container_width=True, type="primary"):
         st.session_state.step = "chat"
         st.rerun()
@@ -646,61 +762,62 @@ def show_profile():
 # CHAT
 # ========================
 def show_chat():
-    st.markdown(f"## 🤖 Assistente IA - Perfil {st.session_state.profile}")
-    
-    st.info(f"💬 Este chat é personalizado para o perfil **{st.session_state.profile}** "
-            f"e tem conhecimento do seu IAP de **{st.session_state.iap_score}%**")
-    
-    # Mostrar mensagens
+    st.markdown(f"## 🤖 Assistente IA")
+    st.info(f"💬 Chat personalizado para o perfil **{st.session_state.profile}** | IAP: **{st.session_state.iap_score}%**")
+
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
-    
-    # Input do usuário
+
     if prompt := st.chat_input("Faça uma pergunta sobre produtividade..."):
-        # Adiciona mensagem do usuário
         st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Gera resposta simulada
+
         profile_tips = {
-            "🎯 Executor": "focar em ação imediata e dividir tarefas em blocos pequenos",
-            "📋 Organizador": "criar estruturas e listas detalhadas antes de começar",
-            "💡 Criativo": "explorar múltiplas abordagens e manter flexibilidade"
+            "Executor": [
+                "focar em ação imediata — divida a tarefa em 3 passos pequenos e comece agora",
+                "criar um senso de urgência artificial: defina um timer de 20 minutos e execute sem interrupções",
+                "começar pela parte mais fácil para ganhar momentum e depois avançar para o que é mais difícil",
+            ],
+            "Organizador": [
+                "criar um checklist claro antes de começar, identificando dependências e prazos",
+                "bloquear tempo específico no calendário para essa atividade e protegê-lo de interrupções",
+                "mapear os riscos e ter um plano B antes de iniciar a execução",
+            ],
+            "Criativo": [
+                "explorar múltiplas abordagens antes de se comprometer com uma — faça um rápido brainstorm de 5 minutos",
+                "buscar referências externas ou analogias de outras áreas para encontrar uma solução original",
+                "trabalhar em rajadas curtas e intensas de criatividade, descansando entre elas",
+            ],
         }
-        
-        tip = profile_tips.get(st.session_state.profile, "manter o foco")
-        
-        response = f"""Como **{st.session_state.profile}** com IAP de {st.session_state.iap_score}%, 
-        recomendo {tip}. 
-        
-        Sobre sua pergunta "{prompt}":
-        
-        {random.choice([
-            "Uma estratégia eficaz seria começar pela parte mais desafiadora quando sua energia estiver alta.",
-            "Experimente usar a técnica Pomodoro - 25 minutos de foco total, 5 minutos de pausa.",
-            "Divida essa tarefa em 3 partes menores e comece pela que parece mais fácil para ganhar momentum.",
-            "O segredo é não esperar motivação - crie um sistema que funcione independente dela."
-        ])}
-        
-        Quer que eu elabore mais algum ponto específico?"""
-        
+
+        key = next((k for k in profile_tips if k in st.session_state.profile), "Executor")
+        tip = random.choice(profile_tips[key])
+
+        response = f"""Como **{st.session_state.profile}** com IAP de **{st.session_state.iap_score}%**, recomendo {tip}.
+
+Sobre sua pergunta — *"{prompt}"*:
+
+{random.choice([
+    "Uma abordagem eficaz é começar pela parte mais desafiadora quando sua energia estiver no pico, geralmente pela manhã.",
+    "Experimente a técnica Pomodoro: 25 minutos de foco total, 5 minutos de pausa. Repita 4 vezes e faça uma pausa longa.",
+    "Divida essa questão em 3 partes menores e resolva uma de cada vez. Completar cada parte já gera motivação para a próxima.",
+    "O segredo está em criar um sistema que funcione independentemente da motivação do momento. Consistência supera inspiração.",
+    "Identifique qual é a menor ação possível que avança esse objetivo e faça ela agora. Pequenos passos criam grandes resultados.",
+])}
+
+Quer que eu aprofunde algum ponto específico ou sugira exercícios práticos?"""
+
         st.session_state.messages.append({"role": "assistant", "content": response})
         st.rerun()
-    
+
     st.markdown("---")
-    
     col1, col2 = st.columns(2)
     with col1:
         if st.button("🔄 Recomeçar Jornada", use_container_width=True):
-            st.session_state.step = "questionnaire"
-            st.session_state.current_question = 0
-            st.session_state.tasks_completed = 0
-            st.session_state.completed_tasks = set()
-            st.session_state.iap_score = None
-            st.session_state.profile = None
-            st.session_state.messages = []
+            for k in ["step", "current_question", "answers", "tasks_completed",
+                      "completed_tasks", "selected_task", "iap_score", "profile", "messages"]:
+                st.session_state[k] = defaults[k]
             st.rerun()
-    
     with col2:
         if st.button("📊 Ver Meu Perfil Novamente", use_container_width=True):
             st.session_state.step = "profile"
@@ -710,15 +827,13 @@ def show_chat():
 # MAIN ROUTER
 # ========================
 if not st.session_state.logged_in:
-    if st.session_state.current_page == "landing":
-        show_landing_page()
-    elif st.session_state.current_page == "features":
-        show_features_page()
-    elif st.session_state.current_page == "login":
-        show_login_page()
-    elif st.session_state.current_page == "about":
-        show_about_page()
-    elif st.session_state.current_page == "lgpd":
-        show_lgpd_page()
+    page_map = {
+        "landing": show_landing_page,
+        "features": show_features_page,
+        "login": show_login_page,
+        "about": show_about_page,
+        "lgpd": show_lgpd_page,
+    }
+    page_map.get(st.session_state.current_page, show_landing_page)()
 else:
     show_app()
