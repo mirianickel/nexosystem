@@ -1,0 +1,16 @@
+# EcoNexo System - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core Framework
+streamlit>=1.28.0
+
+# AI Providers
+anthropic>=0.40.0
+groq>=0.4.0
+
+# Utilities
+python-dotenv>=1.0.0
+
+# Optional: Enhanced features
+# pandas>=2.0.0
+# plotly>=5.17.0
