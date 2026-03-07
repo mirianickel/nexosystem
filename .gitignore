@@ -1,47 +1,5 @@
-# Environment variables
 .env
 .env.local
-
-# Database
 data/
 *.db
-
-# Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-
-# OS
-.DS_Store
-Thumbs.db
-```
-
-### **3. NÃO faça commit do arquivo `.env`:**
-
-O arquivo `.env` com suas chaves deve ficar **APENAS no seu computador local**, nunca no GitHub!
-
----
-
-## 📋 ESTRUTURA CORRETA NO GITHUB:
-
-### ✅ Arquivos que DEVEM estar no GitHub:
-```
-nexosystem/
-├── .gitignore          ← Lista de arquivos a ignorar
-├── .env.example        ← Template SEM chaves reais
-├── main.py
-├── database.py
-├── agent.py
-├── setup.py
-└── requirements.txt
-```
-
-### ❌ Arquivos que NÃO DEVEM estar no GitHub:
-```
-❌ .env                 ← Chaves reais (só no seu PC!)
-❌ data/                ← Banco de dados local
-❌ __pycache__/         ← Cache do Python
