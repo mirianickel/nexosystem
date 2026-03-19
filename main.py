@@ -4,13 +4,19 @@ Full-featured productivity platform with AI, SQL persistence,
 bilingual support, accessibility, dark mode, and innovative design.
 """
 
+"""
+EcoNexo's System — v2.0 (Main Interface)
+"""
+
 import streamlit as st
 import random
 import sys
 import os
 
+# Ajuste de Path para imports locais
 sys.path.insert(0, os.path.dirname(__file__))
 
+# 1. Tenta importar os módulos auxiliares (i18n e database)
 try:
     import database as db
     DB_AVAILABLE = True
@@ -23,194 +29,185 @@ try:
 except Exception:
     I18N_AVAILABLE = False
 
-    # ── Fallback i18n ──────────────────────────────────────────────────
-    _STRINGS = {
-        "nav_home": {"pt": "🏠 Home", "en": "🏠 Home"},
-        "nav_features": {"pt": "📖 Features", "en": "📖 Features"},
-        "nav_about": {"pt": "👥 Sobre", "en": "👥 About"},
-        "nav_contact": {"pt": "📬 Contato", "en": "📬 Contact"},
-        "nav_lgpd": {"pt": "🔒 LGPD", "en": "🔒 Privacy"},
-        "nav_login": {"pt": "Entrar", "en": "Login"},
-        "nav_logout": {"pt": "Sair", "en": "Logout"},
-        "hero_title_1": {"pt": "Produtividade", "en": "Productivity"},
-        "hero_title_2": {"pt": "Guiada", "en": "Guided"},
-        "hero_title_3": {"pt": "e Inteligente", "en": "and Intelligent"},
-        "hero_sub": {"pt": "Descubra seu perfil de trabalho, receba tarefas personalizadas e alcance autonomia produtiva real com IA.", "en": "Discover your work profile, get personalized tasks and achieve real productive autonomy with AI."},
-        "btn_start": {"pt": "🚀 Começar Agora", "en": "🚀 Get Started"},
-        "btn_learn": {"pt": "📖 Saiba Mais", "en": "📖 Learn More"},
-        "btn_login": {"pt": "Entrar", "en": "Login"},
-        "btn_signup": {"pt": "Criar Conta", "en": "Sign Up"},
-        "btn_save_settings": {"pt": "💾 Salvar", "en": "💾 Save"},
-        "btn_send": {"pt": "📨 Enviar", "en": "📨 Send"},
-        "btn_next": {"pt": "Próxima →", "en": "Next →"},
-        "btn_prev": {"pt": "← Anterior", "en": "← Previous"},
-        "btn_finish": {"pt": "✅ Finalizar", "en": "✅ Finish"},
-        "btn_start_task": {"pt": "Iniciar", "en": "Start"},
-        "btn_select": {"pt": "Selecionar", "en": "Select"},
-        "btn_cancel": {"pt": "Cancelar", "en": "Cancel"},
-        "btn_see_iap": {"pt": "Ver meu IAP →", "en": "See my IAP →"},
-        "btn_see_profile": {"pt": "Descobrir meu Perfil →", "en": "Discover my Profile →"},
-        "btn_chat": {"pt": "🤖 Conversar com IA →", "en": "🤖 Chat with AI →"},
-        "btn_clear_chat": {"pt": "🗑️ Limpar Chat", "en": "🗑️ Clear Chat"},
-        "btn_restart": {"pt": "🔄 Recomeçar", "en": "🔄 Restart"},
-        "btn_see_profile_again": {"pt": "📊 Ver Perfil", "en": "📊 See Profile"},
-        "login_title": {"pt": "🔐 Acesse sua conta", "en": "🔐 Access your account"},
-        "tab_login": {"pt": "✉️ Entrar", "en": "✉️ Login"},
-        "tab_signup": {"pt": "📝 Criar Conta", "en": "📝 Sign Up"},
-        "field_email": {"pt": "📧 Email", "en": "📧 Email"},
-        "field_password": {"pt": "🔒 Senha", "en": "🔒 Password"},
-        "field_name": {"pt": "👤 Nome Completo", "en": "👤 Full Name"},
-        "lgpd_agree": {"pt": "Concordo com a Política de Privacidade (LGPD)", "en": "I agree to the Privacy Policy"},
-        "err_fill": {"pt": "❌ Preencha todos os campos", "en": "❌ Fill in all fields"},
-        "err_lgpd": {"pt": "❌ Aceite a política de privacidade", "en": "❌ Accept the privacy policy"},
-        "err_pw_len": {"pt": "❌ Senha deve ter mínimo 8 caracteres", "en": "❌ Password must be at least 8 characters"},
-        "err_credentials": {"pt": "❌ Email ou senha incorretos", "en": "❌ Invalid email or password"},
-        "err_email_exists": {"pt": "❌ Email já cadastrado", "en": "❌ Email already registered"},
-        "login_success": {"pt": "✅ Login realizado!", "en": "✅ Login successful!"},
-        "signup_success": {"pt": "✅ Conta criada!", "en": "✅ Account created!"},
-        "about_title": {"pt": "Quem Somos", "en": "About Us"},
-        "about_mission": {"pt": "Nossa Missão", "en": "Our Mission"},
-        "about_values": {"pt": "Nossos Valores", "en": "Our Values"},
-        "contact_title": {"pt": "Fale Conosco", "en": "Contact Us"},
-        "contact_name": {"pt": "Nome", "en": "Name"},
-        "contact_email": {"pt": "Email", "en": "Email"},
-        "contact_subject": {"pt": "Assunto", "en": "Subject"},
-        "contact_message": {"pt": "Mensagem", "en": "Message"},
-        "contact_sent": {"pt": "✅ Mensagem enviada! Responderemos em breve.", "en": "✅ Message sent! We will reply soon."},
-        "q_title": {"pt": "Questionário de Perfil", "en": "Profile Questionnaire"},
-        "q_question": {"pt": "Pergunta", "en": "Question"},
-        "q_of": {"pt": "de", "en": "of"},
-        "q_identify": {"pt": "Para cada opção, indique o quanto você se identifica:", "en": "For each option, indicate how much you identify:"},
-        "aff_1": {"pt": "Me identifico totalmente", "en": "Fully identify"},
-        "aff_2": {"pt": "Me identifico parcialmente", "en": "Partially identify"},
-        "aff_3": {"pt": "Não me identifico muito", "en": "Barely identify"},
-        "aff_4": {"pt": "Não me identifico", "en": "Do not identify"},
-        "tasks_title": {"pt": "Vitrine de Tarefas", "en": "Task Showcase"},
-        "tasks_done": {"pt": "tarefas completadas", "en": "tasks completed"},
-        "tasks_all_done": {"pt": "🎉 Parabéns! 3 tarefas concluídas!", "en": "🎉 Congrats! 3 tasks completed!"},
-        "task_recommended": {"pt": "⭐ Recomendada", "en": "⭐ Recommended"},
-        "task_done_label": {"pt": "✅ Concluída", "en": "✅ Done"},
-        "iap_title": {"pt": "Índice de Autonomia Produtiva", "en": "Productive Autonomy Index"},
-        "iap_above": {"pt": "Acima da média ↑", "en": "Above average ↑"},
-        "iap_detail": {"pt": "Detalhamento", "en": "Details"},
-        "iap_initiative": {"pt": "Iniciativa", "en": "Initiative"},
-        "iap_execution": {"pt": "Execução", "en": "Execution"},
-        "iap_conclusion": {"pt": "Conclusão", "en": "Conclusion"},
-        "iap_what": {"pt": "O que é o IAP?", "en": "What is the IAP?"},
-        "iap_desc": {"pt": "O Índice de Autonomia Produtiva mede sua capacidade de iniciar, executar e completar tarefas de forma independente. Quanto maior o IAP, maior sua autonomia!", "en": "The Productive Autonomy Index measures your ability to start, execute and complete tasks independently. The higher the IAP, the greater your autonomy!"},
-        "profile_title": {"pt": "Seu Perfil", "en": "Your Profile"},
-        "profile_strengths": {"pt": "💪 Suas Forças", "en": "💪 Your Strengths"},
-        "profile_tips": {"pt": "💡 Dicas Personalizadas", "en": "💡 Personalized Tips"},
-        "chat_title": {"pt": "Assistente IA", "en": "AI Assistant"},
-        "chat_context": {"pt": "Perfil:", "en": "Profile:"},
-        "chat_placeholder": {"pt": "Faça uma pergunta sobre produtividade...", "en": "Ask a productivity question..."},
-        "settings_title": {"pt": "Preferências", "en": "Settings"},
-        "settings_theme": {"pt": "Tema", "en": "Theme"},
-        "settings_theme_light": {"pt": "☀️ Claro", "en": "☀️ Light"},
-        "settings_theme_dark": {"pt": "🌙 Escuro", "en": "🌙 Dark"},
-        "settings_font": {"pt": "Tamanho da Fonte", "en": "Font Size"},
-        "settings_font_sm": {"pt": "Pequeno", "en": "Small"},
-        "settings_font_md": {"pt": "Médio", "en": "Medium"},
-        "settings_font_lg": {"pt": "Grande", "en": "Large"},
-        "settings_lang": {"pt": "Idioma", "en": "Language"},
-        "settings_saved": {"pt": "✅ Preferências salvas!", "en": "✅ Settings saved!"},
-        "executor_name": {"pt": "Executor", "en": "Executor"},
-        "executor_desc": {"pt": "Focado em ação rápida e resultados imediatos", "en": "Focused on quick action and immediate results"},
-        "organizer_name": {"pt": "Organizador", "en": "Organizer"},
-        "organizer_desc": {"pt": "Estrutura processos e planeja com precisão", "en": "Structures processes and plans with precision"},
-        "creative_name": {"pt": "Criativo", "en": "Creative"},
-        "creative_desc": {"pt": "Inova constantemente e explora novas ideias", "en": "Constantly innovates and explores new ideas"},
-        "footer_rights": {"pt": "© 2026 EcoNexo's System — Todos os direitos reservados", "en": "© 2026 EcoNexo's System — All rights reserved"},
-    }
+# ── LOGICA DE APOIO ──────────────────────────────────────────────────
 
-    def t(key, lang="pt"):
-        return _STRINGS.get(key, {}).get(lang, _STRINGS.get(key, {}).get("pt", key))
+def tx(key):
+    """Atalho para tradução rápida via i18n.py"""
+    if I18N_AVAILABLE:
+        return t(key)
+    return key # Fallback caso a chave não exista
 
-    _QUESTIONS_PT = [
-        {"q": "Como você costuma iniciar um projeto?", "opts": [("Executor", "Pulo direto para a ação, sem muita análise prévia"), ("Organizador", "Faço um planejamento detalhado antes de começar"), ("Criativo", "Exploro ideias e possibilidades primeiro")]},
-        {"q": "O que mais te motiva no trabalho?", "opts": [("Executor", "Ver resultados rápidos e tangíveis"), ("Organizador", "Ter processos claros e tudo bem organizado"), ("Criativo", "Criar algo novo e inovador")]},
-        {"q": "Como você lida com prazos apertados?", "opts": [("Executor", "Trabalho melhor sob pressão, entro no modo foco"), ("Organizador", "Planejo com antecedência para evitar correria"), ("Criativo", "Adapto o escopo do trabalho conforme a situação")]},
-        {"q": "Qual é o seu maior ponto forte?", "opts": [("Executor", "Colocar ideias em prática rapidamente"), ("Organizador", "Manter tudo estruturado e dentro do prazo"), ("Criativo", "Encontrar soluções originais para problemas")]},
-        {"q": "Como você prefere receber tarefas?", "opts": [("Executor", "Direto ao ponto: o que fazer e até quando"), ("Organizador", "Com contexto, critérios e checklist claros"), ("Criativo", "Com liberdade para interpretar e criar a abordagem")]},
-        {"q": "Quando um projeto não vai bem, o que você faz?", "opts": [("Executor", "Tomo uma decisão rápida e mudo o curso da ação"), ("Organizador", "Reviso o planejamento e identifico onde errei"), ("Criativo", "Busco uma abordagem completamente diferente")]},
-        {"q": "Como você organiza seu dia de trabalho?", "opts": [("Executor", "Faço as tarefas conforme chegam, priorizando urgência"), ("Organizador", "Tenho uma lista priorizada e sigo ela rigorosamente"), ("Criativo", "Trabalho no que me inspira mais em cada momento")]},
-    ]
-    _QUESTIONS_EN = [
-        {"q": "How do you usually start a project?", "opts": [("Executor", "I jump straight into action without much prior analysis"), ("Organizer", "I make a detailed plan before starting"), ("Creative", "I explore ideas and possibilities first")]},
-        {"q": "What motivates you most at work?", "opts": [("Executor", "Seeing quick, tangible results"), ("Organizer", "Having clear processes and everything organized"), ("Creative", "Creating something new and innovative")]},
-        {"q": "How do you handle tight deadlines?", "opts": [("Executor", "I work better under pressure, I enter focus mode"), ("Organizer", "I plan ahead to avoid last-minute rush"), ("Creative", "I adapt the scope of work as needed")]},
-        {"q": "What is your greatest strength?", "opts": [("Executor", "Putting ideas into practice quickly"), ("Organizer", "Keeping everything structured and on time"), ("Creative", "Finding original solutions to problems")]},
-        {"q": "How do you prefer to receive tasks?", "opts": [("Executor", "Straight to the point: what to do and by when"), ("Organizer", "With context, clear criteria and checklists"), ("Creative", "With freedom to interpret and create the approach")]},
-        {"q": "When a project is not going well, what do you do?", "opts": [("Executor", "I make a quick decision and change course"), ("Organizer", "I review the plan and identify where I went wrong"), ("Creative", "I look for a completely different approach")]},
-        {"q": "How do you organize your workday?", "opts": [("Executor", "I do tasks as they come, prioritizing urgency"), ("Organizer", "I have a prioritized list and follow it strictly"), ("Creative", "I work on what inspires me most at each moment")]},
-    ]
-    QUESTIONS = {"pt": _QUESTIONS_PT, "en": _QUESTIONS_EN}
+def compute_profile():
+    """Calcula o perfil do usuário com base nas respostas."""
+    scores = {"Executor": 0, "Organizador": 0, "Criativo": 0}
+    # Consideramos as opções positivas para pontuar
+    for idx in st.session_state.answers:
+        answer_dict = st.session_state.answers[idx]
+        for p_key, val in answer_dict.items():
+            if "Sim" in val or "Muito" in val:
+                scores[p_key] += 2
+            else:
+                scores[p_key] += 1
+    
+    winner = max(scores, key=scores.get)
+    icons = {"Executor": "🎯 Executor", "Organizador": "📋 Organizador", "Criativo": "💡 Criativo"}
+    return icons.get(winner, winner)
 
-    _TASKS_PT = [
-        {"id": 0, "icon": "✉️", "name": "Escrever um email profissional", "desc": "Rascunhe um email claro e objetivo para um colega ou cliente.", "profile": "Executor"},
-        {"id": 1, "icon": "📝", "name": "Organizar lista de prioridades do dia", "desc": "Liste e priorize as 5 tarefas mais importantes para hoje.", "profile": "Organizador"},
-        {"id": 2, "icon": "💡", "name": "Brainstorm de ideias criativas", "desc": "Gere 10 ideias para solucionar um problema do seu trabalho.", "profile": "Criativo"},
-        {"id": 3, "icon": "📄", "name": "Revisar um documento importante", "desc": "Releia e melhore um documento em que está trabalhando.", "profile": "Organizador"},
-        {"id": 4, "icon": "📅", "name": "Planejar a próxima semana", "desc": "Monte um plano realista para os próximos 7 dias.", "profile": "Organizador"},
-        {"id": 5, "icon": "⚡", "name": "Resolver uma tarefa pendente há dias", "desc": "Escolha algo que está procrastinando e finalize agora.", "profile": "Executor"},
-        {"id": 6, "icon": "🎨", "name": "Criar um esboço visual ou mapa mental", "desc": "Desenhe ou descreva visualmente um projeto ou ideia.", "profile": "Criativo"},
-        {"id": 7, "icon": "📊", "name": "Analisar métricas ou resultados", "desc": "Revise números, dados ou indicadores do seu trabalho.", "profile": "Executor"},
-    ]
-    _TASKS_EN = [
-        {"id": 0, "icon": "✉️", "name": "Write a professional email", "desc": "Draft a clear, objective email to a colleague or client.", "profile": "Executor"},
-        {"id": 1, "icon": "📝", "name": "Organize today's priority list", "desc": "List and prioritize the 5 most important tasks for today.", "profile": "Organizer"},
-        {"id": 2, "icon": "💡", "name": "Creative brainstorming session", "desc": "Generate 10 ideas to solve a problem at work.", "profile": "Creative"},
-        {"id": 3, "icon": "📄", "name": "Review an important document", "desc": "Re-read and improve a document you are working on.", "profile": "Organizer"},
-        {"id": 4, "icon": "📅", "name": "Plan next week", "desc": "Build a realistic plan for the next 7 days.", "profile": "Organizer"},
-        {"id": 5, "icon": "⚡", "name": "Resolve a long-pending task", "desc": "Pick something you have been procrastinating and finish it now.", "profile": "Executor"},
-        {"id": 6, "icon": "🎨", "name": "Create a visual sketch or mind map", "desc": "Draw or visually describe a project or idea.", "profile": "Creative"},
-        {"id": 7, "icon": "📊", "name": "Analyze metrics or results", "desc": "Review numbers, data or indicators from your work.", "profile": "Executor"},
-    ]
-    TASKS = {"pt": _TASKS_PT, "en": _TASKS_EN}
+def get_profile_key():
+    """Limpa o nome do perfil para buscar dados."""
+    p = st.session_state.get("profile", "Executor")
+    if "Executor" in p: return "Executor"
+    if "Organizador" in p: return "Organizador"
+    return "Criativo"
 
-    PROFILE_INFO = {
-        "pt": {
-            "Executor": {
-                "icon": "🎯",
-                "desc": "Você é orientado à ação e resultados. Prefere fazer do que planejar excessivamente. Sua força está na capacidade de colocar ideias em prática com agilidade.",
-                "strengths": ["⚡ Implementação rápida", "🎯 Foco total em resultados", "🔄 Alta adaptabilidade à mudança"],
-                "tips": ["Use blocos de foco de 25 min (Técnica Pomodoro)", "Divida projetos grandes em micro-tarefas imediatas", "Celebre pequenas conquistas para manter o momentum"],
-            },
-            "Organizador": {
-                "icon": "📋",
-                "desc": "Você valoriza estrutura, clareza e planejamento. Gosta de ter processos definidos e tudo sob controle, entregando com consistência e confiabilidade.",
-                "strengths": ["📅 Planejamento detalhado", "🗂️ Organização impecável", "⏱️ Gestão de tempo precisa"],
-                "tips": ["Crie checklists para cada projeto ou meta", "Use ferramentas de calendário e bloco de tempo", "Defina prazos realistas com margens de segurança"],
-            },
-            "Criativo": {
-                "icon": "💡",
-                "desc": "Você é inovador e está sempre explorando novas possibilidades. Pensa fora da caixa, encontra soluções originais e se destaca quando tem liberdade para criar.",
-                "strengths": ["🌟 Pensamento divergente", "💫 Inovação constante", "🎨 Flexibilidade mental elevada"],
-                "tips": ["Reserve tempo diário para brainstorm livre", "Mantenha um caderno de ideias sempre acessível", "Experimente métodos diferentes para evitar bloqueio criativo"],
-            },
-        },
-        "en": {
-            "Executor": {
-                "icon": "🎯",
-                "desc": "You are action and results oriented. You prefer doing over excessive planning. Your strength lies in your ability to put ideas into practice with agility.",
-                "strengths": ["⚡ Fast implementation", "🎯 Total focus on results", "🔄 High adaptability to change"],
-                "tips": ["Use 25-minute focus blocks (Pomodoro Technique)", "Break large projects into immediate micro-tasks", "Celebrate small wins to maintain momentum"],
-            },
-            "Organizer": {
-                "icon": "📋",
-                "desc": "You value structure, clarity and planning. You like having defined processes and everything under control, delivering with consistency and reliability.",
-                "strengths": ["📅 Detailed planning", "🗂️ Impeccable organization", "⏱️ Precise time management"],
-                "tips": ["Create checklists for every project or goal", "Use calendar tools and time blocking", "Set realistic deadlines with safety margins"],
-            },
-            "Creative": {
-                "icon": "💡",
-                "desc": "You are innovative and always exploring new possibilities. You think outside the box, find original solutions and excel when you have freedom to create.",
-                "strengths": ["🌟 Divergent thinking", "💫 Constant innovation", "🎨 High mental flexibility"],
-                "tips": ["Reserve daily time for free brainstorming", "Keep an idea notebook always accessible", "Try different methods to avoid creative blocks"],
-            },
-        },
-    }
+def clear_journey():
+    """Reseta o progresso."""
+    st.session_state.step = "questionnaire"
+    st.session_state.answers = {}
+    st.session_state.q_index = 0
+    st.session_state.tasks_completed = 0
+    st.session_state.completed_tasks = set()
+    st.session_state.profile = None
 
+# ── ESTILOS CSS (O visual que você gosta) ────────────────────────────
+
+def apply_styles():
+    st.markdown(f"""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700&family=Inter:wght@400;600&display=swap');
+    
+    .stApp {{
+        background: radial-gradient(circle at top right, #f8fafc, #eff6ff);
+        font-family: 'Inter', sans-serif;
+    }}
+    
+    .eco-card {{
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
+    }}
+    
+    .section-label {{
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #6366f1;
+        margin-bottom: 0.5rem;
+    }}
+    
+    h1, h2 {{ font-family: 'Syne', sans-serif; color: #1e293b; }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# ── PASSOS DA INTERFACE ──────────────────────────────────────────────
+
+def step_questionnaire():
+    apply_styles()
+    qs = QUESTIONS[st.session_state.lang]
+    idx = st.session_state.q_index
+    
+    st.markdown(f"<div class='section-label'>{tx('q_title')}</div>", unsafe_allow_html=True)
+    st.progress((idx + 1) / len(qs))
+    
+    q = qs[idx]
+    st.markdown(f"<div class='eco-card'><h2>{q['q']}</h2></div>", unsafe_allow_html=True)
+    
+    current_answers = {}
+    for p_key, opt_text in q["opts"]:
+        st.write(f"**{opt_text}**")
+        ans = st.radio("Nível de afinidade:", ["Pouco", "Médio", "Muito"], 
+                       key=f"q_{idx}_{p_key}", horizontal=True, label_visibility="collapsed")
+        current_answers[p_key] = ans
+
+    col1, col2 = st.columns([1,1])
+    with col1:
+        if st.button("Anterior", disabled=idx==0):
+            st.session_state.q_index -= 1
+            st.rerun()
+    with col2:
+        if st.button("Próximo" if idx < len(qs)-1 else "Finalizar", type="primary"):
+            st.session_state.answers[idx] = current_answers
+            if idx < len(qs)-1:
+                st.session_state.q_index += 1
+            else:
+                st.session_state.profile = compute_profile()
+                st.session_state.step = "tasks"
+            st.rerun()
+
+def step_tasks():
+    apply_styles()
+    st.markdown("<div class='section-label'>Tarefas de Ativação</div>", unsafe_allow_html=True)
+    tasks = TASKS[st.session_state.lang]
+    
+    for task in tasks:
+        with st.container():
+            is_done = task['id'] in st.session_state.completed_tasks
+            st.markdown(f"""
+            <div class='eco-card' style='opacity: {0.5 if is_done else 1}'>
+                <h3>{task['icon']} {task['name']}</h3>
+                <p>{task['desc']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            if not is_done:
+                if st.button(f"Concluir {task['name']}", key=task['id']):
+                    st.session_state.completed_tasks.add(task['id'])
+                    st.session_state.tasks_completed = len(st.session_state.completed_tasks)
+                    st.rerun()
+    
+    if st.session_state.tasks_completed >= 2:
+        if st.button("Ver meu Perfil Completo", type="primary"):
+            st.session_state.step = "profile"
+            st.rerun()
+
+def step_profile():
+    apply_styles()
+    pk = get_profile_key()
+    info = PROFILE_INFO[st.session_state.lang].get(pk, {})
+    
+    st.balloons()
+    st.markdown(f"<div class='eco-card' style='text-align:center'>", unsafe_allow_html=True)
+    st.markdown(f"<h1>{info.get('icon', '🎯')}</h1>", unsafe_allow_html=True)
+    st.markdown(f"<h2>Seu perfil é {st.session_state.profile}</h2>", unsafe_allow_html=True)
+    st.write(info.get('desc', ''))
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    if st.button("Recomeçar"):
+        clear_journey()
+        st.rerun()
+
+# ── ROTEADOR PRINCIPAL ───────────────────────────────────────────────
+
+def main():
+    # Inicialização de variáveis
+    if "step" not in st.session_state: st.session_state.step = "questionnaire"
+    if "lang" not in st.session_state: st.session_state.lang = "pt"
+    if "answers" not in st.session_state: st.session_state.answers = {}
+    if "q_index" not in st.session_state: st.session_state.q_index = 0
+    if "completed_tasks" not in st.session_state: st.session_state.completed_tasks = set()
+    if "tasks_completed" not in st.session_state: st.session_state.tasks_completed = 0
+
+    # Menu Lateral
+    with st.sidebar:
+        st.title("🌱 EcoNexo")
+        st.session_state.lang = st.selectbox("Idioma", ["pt", "en"], index=0)
+        if st.button("Reiniciar"):
+            clear_journey()
+            st.rerun()
+
+    # Navegação
+    if st.session_state.step == "questionnaire":
+        step_questionnaire()
+    elif st.session_state.step == "tasks":
+        step_tasks()
+    elif st.session_state.step == "profile":
+        step_profile()
+
+if __name__ == "__main__":
+    main()
 # ─────────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────────
